@@ -185,7 +185,7 @@ openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes -subj
         elif opt == '-l':
             host = arg
         elif opt == '-p':
-            listening_port = arg
+            listening_port = int(arg)
         elif opt == '-a':
             basicAuthString = arg
             basic_authentication_key = base64.b64encode(basicAuthString.encode("utf-8"))
