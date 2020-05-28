@@ -193,7 +193,8 @@ openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes -subj
         elif opt == '-c':
             certificate_file = arg
         elif opt == '-g':
-            os.system('openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes -subj "/C=/ST=/O=/OU=/CN="')
+            #os.system('openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes -subj "/C=/ST=/O=/OU=/CN="')
+            os.system('openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout server.pem -out server.pem -subj "/C=YY"')
 
     encrypted = "https://" if certificate_file else "http://"
     print("[+] Staring server... " + encrypted + host + ":" + str(listening_port))
