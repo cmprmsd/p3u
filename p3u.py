@@ -14,16 +14,16 @@ import string
 from datetime import datetime
 
 __all__ = ["P3U"]
-__author__ = "H8.to"
+__author__ = "H8.to // 0x483d"
 __home_page__ = "http://h8.to/"
 
-auth_logfile = open("auth_log.txt", "a")
+auth_log_file = None
 
 # This script makes all arguments optional and uses C style arguments
 # Original script: https://github.com/4d4c/http.server_upload/blob/master/https_upload.py
 # This version also includes path traversal fix, host argument and certificate generate argument -g
 
-class SekurWebServer(http.server.BaseHTTPRequestHandler):
+class P3UWebServer(http.server.BaseHTTPRequestHandler):
     server_version = "Apache"  # replaces BaseHTTP/0.6
     sys_version = ""  # replaces Python/3.6.7
 
@@ -47,7 +47,9 @@ class SekurWebServer(http.server.BaseHTTPRequestHandler):
                     provided_data = str(authorization_header)
 
                 # Log failed authentication
-                auth_logfile.write(source_ip + " - - " + time + " INVALID_LOGON_ATTEMPT (" + provided_data + ")\n")
+                auth_log_file = open(AUTH_LOG_FILE_PATH, "a")
+                auth_log_file.write(time + " -- " + source_ip + " -- " + provided_data + "\n")
+                auth_log_file.close()
 
             self.do_AUTHHEAD()
             self.close_connection = True
@@ -170,9 +172,9 @@ class SekurWebServer(http.server.BaseHTTPRequestHandler):
 # Setup Server (CustomBaseHTTPR)
 def start_https_server(listening_port, basic_authentication_key, certificate_file):
     if use_auth:
-        SekurWebServer.basic_authentication_key = "Basic " + basic_authentication_key.decode("utf-8")
+        P3UWebServer.basic_authentication_key = "Basic " + basic_authentication_key.decode("utf-8")
 
-    https_server = http.server.HTTPServer((host, listening_port), SekurWebServer)
+    https_server = http.server.HTTPServer((host, listening_port), P3UWebServer)
     if certificate_file:
         https_server.socket = ssl.wrap_socket(https_server.socket, certfile=certificate_file, server_side=True)
 
@@ -181,18 +183,17 @@ def start_https_server(listening_port, basic_authentication_key, certificate_fil
     except KeyboardInterrupt:
         print("\n[!] Keyboard interrupt received, exiting...")
         https_server.server_close()
-        auth_logfile.close()
         sys.exit(0)
 
 # Print usage data
 def usage():
-    print('\np3u.py -l ip -p port -a user:password -c server.pem')
+    print('\np3u.py -l ip -p port -a user:password -c server.pem -o auth.log')
 
 # Main function
 if __name__ == '__main__':
     # Try to parse arguments
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ghl:p:a:c:")
+        opts, args = getopt.getopt(sys.argv[1:], "ghl:p:a:c:o:")
 
     # Error Handling
     except getopt.GetoptError as err:
@@ -206,6 +207,7 @@ if __name__ == '__main__':
     basic_authentication_key = ""
     host = "127.0.0.1"
     listening_port = 8080
+    AUTH_LOG_FILE_PATH="failed_auth.txt"
 
     # Parse arguments
     for opt, arg in opts:
@@ -230,7 +232,10 @@ if __name__ == '__main__':
         elif opt == '-g':
             # Generate certificate
             os.system('openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout server.pem -out server.pem -subj "/C=YY"')
+        elif opt == '-o':
+            AUTH_LOG_FILE_PATH = arg
 
     protocol = "https://" if certificate_file else "http://"
     print("[+] Staring server... " + protocol + host + ":" + str(listening_port))
+
     start_https_server(listening_port, basic_authentication_key, certificate_file)
