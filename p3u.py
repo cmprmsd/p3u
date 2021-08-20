@@ -188,6 +188,7 @@ def start_https_server(listening_port, basic_authentication_key, certificate_fil
 # Print usage data
 def usage():
     print('\np3u.py -l ip -p port -a user:password -c server.pem -o auth.log')
+    print('Generate SSL certificate with:\np3u.py -g')
 
 # Main function
 if __name__ == '__main__':
