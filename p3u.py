@@ -46,10 +46,14 @@ class P3UWebServer(http.server.BaseHTTPRequestHandler):
                 except:
                     provided_data = str(authorization_header)
 
-                # Log failed authentication
-                auth_log_file = open(AUTH_LOG_FILE_PATH, "a")
-                auth_log_file.write(time + " -- " + source_ip + " -- " + provided_data + "\n")
-                auth_log_file.close()
+                # If logging is enabled, write to file
+                if logging_enabled:
+                    auth_log_file = open(AUTH_LOG_FILE_PATH, "a")
+                    auth_log_file.write(source_ip + " - - " + time + " [FAILED LOGIN]: \"" + provided_data + "\"\n")
+                    auth_log_file.close()
+
+                # And always print to stdout
+                print(source_ip + " - - " + time + " [FAILED LOGIN]: \"" + provided_data + "\"")
 
             self.do_AUTHHEAD()
             self.close_connection = True
@@ -175,8 +179,11 @@ def start_https_server(listening_port, basic_authentication_key, certificate_fil
         P3UWebServer.basic_authentication_key = "Basic " + basic_authentication_key.decode("utf-8")
 
     https_server = http.server.HTTPServer((host, listening_port), P3UWebServer)
+    
     if certificate_file:
-        https_server.socket = ssl.wrap_socket(https_server.socket, certfile=certificate_file, server_side=True)
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.load_cert_chain(certificate_file)
+        https_server.socket = ctx.wrap_socket(https_server.socket, server_side=True)
 
     try:
         https_server.serve_forever()
@@ -187,7 +194,8 @@ def start_https_server(listening_port, basic_authentication_key, certificate_fil
 
 # Print usage data
 def usage():
-    print('\np3u.py -l ip -p port -a user:password -c server.pem -o auth.log')
+    print('\np3u.py -l ip -p port -a user:password -c server.pem [-o logfile.txt]')
+    print()
     print('Generate SSL certificate with:\np3u.py -g')
 
 # Main function
@@ -208,7 +216,8 @@ if __name__ == '__main__':
     basic_authentication_key = ""
     host = "127.0.0.1"
     listening_port = 8080
-    AUTH_LOG_FILE_PATH="failed_auth.txt"
+    logging_enabled = False
+    AUTH_LOG_FILE_PATH=""
 
     # Parse arguments
     for opt, arg in opts:
@@ -232,8 +241,10 @@ if __name__ == '__main__':
             certificate_file = arg
         elif opt == '-g':
             # Generate certificate
-            os.system('openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout server.pem -out server.pem -subj "/C=YY"')
+            os.system('openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout server.pem -out server.pem -subj "/C=YY"')
+            exit()
         elif opt == '-o':
+            logging_enabled = True
             AUTH_LOG_FILE_PATH = arg
 
     protocol = "https://" if certificate_file else "http://"
