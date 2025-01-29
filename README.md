@@ -7,11 +7,11 @@ So I stumbled over the gist files already implementing it and modified them for 
 Feel free to contribute with PRs.
 
 # Script Usage
-Use the following arguments: \
-`p3u.py -l ip -p port -a user:password -c server.pem`
-
 Generate your cert with \
 `p3u.py -g`
+
+Use the following arguments: \
+`p3u.py -l ip -p port -a user:password -c server.pem`
 
 Use remote Box for reverse proxy and ssl offloading:
 1. Configure your server with Let's Encrypt and nginx

@@ -173,7 +173,7 @@ class P3UWebServer(http.server.BaseHTTPRequestHandler):
             </html>
         """.format(request_path, file_list_html).encode()
 
-# Setup Server (CustomBaseHTTPR)
+# Setup Server (CustomBaseHTTP)
 def start_https_server(listening_port, basic_authentication_key, certificate_file):
     if use_auth:
         P3UWebServer.basic_authentication_key = "Basic " + basic_authentication_key.decode("utf-8")
@@ -181,9 +181,10 @@ def start_https_server(listening_port, basic_authentication_key, certificate_fil
     https_server = http.server.HTTPServer((host, listening_port), P3UWebServer)
     
     if certificate_file:
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ctx.load_cert_chain(certificate_file)
-        https_server.socket = ctx.wrap_socket(https_server.socket, server_side=True)
+        # Use SSLContext for wrapping the socket
+        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        context.load_cert_chain(certfile=certificate_file)
+        https_server.socket = context.wrap_socket(https_server.socket, server_side=True)
 
     try:
         https_server.serve_forever()
